@@ -224,12 +224,16 @@
       try { data = JSON.parse(text); } catch(e) { throw new Error(`Réponse invalide: ${text.substring(0,100)}`); }
      if(!res.ok) throw new Error(data.error || `Erreur ${res.status}`);
 
-      document.getElementById('successTitle').textContent=`"${g('titre')}"`;
-      document.getElementById('successTags').innerHTML=[state.nature,state.priorite,...state.labels].map(t=>`<span class="success-tag">${t}</span>`).join('');
-      document.querySelector('.header').style.display='none';
-      document.getElementById('formFooter').style.display='none';
-      document.querySelector('.body').innerHTML='';
-      document.getElementById('successView').classList.add('show');
+      document.getElementById('successTitle').textContent = `"${g('titre')}"`;
+document.getElementById('successTags').innerHTML =
+  [state.nature, state.priorite, ...state.labels]
+    .map(t => `<span class="success-tag">${t}</span>`)
+    .join('');
+
+document.querySelectorAll('.step').forEach(step => step.style.display = 'none');
+document.getElementById('errorBanner').classList.remove('show');
+document.getElementById('formFooter').style.display = 'none';
+document.getElementById('successView').classList.add('show');
       document.querySelector('.body').appendChild(document.getElementById('successView'));
     } catch(err){
       btn.disabled=false; btn.textContent='✓ Envoyer la demande';
