@@ -7,7 +7,7 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
 const NOTION_TOKEN = process.env.NOTION_TOKEN;
-const NOTION_DB_ID = "e3932eea-f641-4eb6-a5e6-56ec993dd8ff";
+const NOTION_DB_ID = "ad929c54-d71c-40a2-978d-a0fa22222dd1";
 
 // Route de test pour vérifier que le bon serveur tourne bien sur Render
 app.get('/ping', function (req, res) {
