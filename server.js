@@ -36,13 +36,31 @@ function makeRequestId() {
   return `REQ-${yyyy}${mm}${dd}-${hh}${mi}${ss}-${rand}`;
 }
 
-async function sendTeamsNotification(payload, requestId, notionPageId) {
+async function sendTeamsNotification(payload, requestId, notionPageId, notionUrl) {
   if (!TEAMS_WEBHOOK_URL) {
     console.log('[TEAMS] TEAMS_WEBHOOK_URL absent, notification ignorée.');
     return;
   }
 
   const safe = (v) => v || '—';
+
+  const priorityColor = (() => {
+    const p = (payload.priorite || '').toLowerCase();
+    if (p.includes('critique')) return 'Attention';
+    if (p.includes('haute')) return 'Warning';
+    if (p.includes('moyenne')) return 'Accent';
+    if (p.includes('basse')) return 'Good';
+    return 'Default';
+  })();
+
+  const priorityEmoji = (() => {
+    const p = (payload.priorite || '').toLowerCase();
+    if (p.includes('critique')) return '🔴';
+    if (p.includes('haute')) return '🟠';
+    if (p.includes('moyenne')) return '🟡';
+    if (p.includes('basse')) return '🟢';
+    return '⚪';
+  })();
 
   const adaptiveCardPayload = {
     type: "message",
@@ -63,41 +81,99 @@ async function sendTeamsNotification(payload, requestId, notionPageId) {
               wrap: true
             },
             {
+              type: "TextBlock",
+              text: safe(payload.titre),
+              weight: "Bolder",
+              size: "Medium",
+              wrap: true,
+              spacing: "Small"
+            },
+            {
+              type: "ColumnSet",
+              spacing: "Medium",
+              columns: [
+                {
+                  type: "Column",
+                  width: "stretch",
+                  items: [
+                    {
+                      type: "TextBlock",
+                      text: `👤 ${safe(payload.demandeur)}`,
+                      wrap: true,
+                      spacing: "None"
+                    },
+                    {
+                      type: "TextBlock",
+                      text: `🏢 ${safe(payload.equipe)}`,
+                      wrap: true,
+                      spacing: "Small"
+                    }
+                  ]
+                },
+                {
+                  type: "Column",
+                  width: "auto",
+                  items: [
+                    {
+                      type: "TextBlock",
+                      text: `${priorityEmoji} ${safe(payload.priorite)}`,
+                      color: priorityColor,
+                      weight: "Bolder",
+                      horizontalAlignment: "Right",
+                      wrap: true
+                    }
+                  ]
+                }
+              ]
+            },
+            {
               type: "FactSet",
+              spacing: "Medium",
               facts: [
                 { title: "Référence", value: safe(requestId) },
-                { title: "Titre", value: safe(payload.titre) },
-                { title: "Demandeur", value: safe(payload.demandeur) },
-                { title: "Email", value: safe(payload.email) },
-                { title: "Équipe", value: safe(payload.equipe) },
                 { title: "Nature", value: safe(payload.nature) },
-                { title: "Priorité", value: safe(payload.priorite) },
+                { title: "Email", value: safe(payload.email) },
                 { title: "Périmètres", value: Array.isArray(payload.labels) && payload.labels.length ? payload.labels.join(', ') : '—' },
                 { title: "Deadline", value: safe(payload.deadline) }
               ]
             },
             {
               type: "TextBlock",
-              text: `Description : ${safe(payload.description)}`,
-              wrap: true,
+              text: "Description",
+              weight: "Bolder",
               spacing: "Medium"
             },
             {
               type: "TextBlock",
-              text: `Impact : ${safe(payload.impact)}`,
+              text: safe(payload.description),
+              wrap: true,
+              spacing: "Small"
+            },
+            {
+              type: "TextBlock",
+              text: "Impact métier",
+              weight: "Bolder",
+              spacing: "Medium"
+            },
+            {
+              type: "TextBlock",
+              text: safe(payload.impact),
               wrap: true,
               spacing: "Small"
             }
           ],
-          actions: payload.lien
-            ? [
-                {
-                  type: "Action.OpenUrl",
-                  title: "Ouvrir le lien",
-                  url: payload.lien
-                }
-              ]
-            : []
+          actions: [
+            ...(notionUrl ? [{
+              type: "Action.OpenUrl",
+              title: "Ouvrir dans Notion",
+              url: notionUrl
+            }] : []),
+            ...(payload.lien ? [{
+              type: "Action.OpenUrl",
+              title: "Ouvrir le lien / maquette",
+              url: payload.lien
+            }] : [])
+          ]
         }
       }
     ]
@@ -234,19 +310,20 @@ app.post('/submit', async function (req, res) {
     });
 
     try {
-      await sendTeamsNotification(payload, requestId, notionData.id);
+      await sendTeamsNotification(payload, requestId, notionData.id, notionData.url);
       console.log('[TEAMS] Notification envoyée', { requestId });
     } catch (teamsErr) {
       console.error('[TEAMS] Erreur notification', {
         requestId,
         message: teamsErr.message
       });
-      // On ne bloque pas le succès si Notion a bien marché
+      // on ne bloque pas le succès si Notion a bien marché
     }
 
     return res.status(200).json({
       success: true,
       id: notionData.id,
+      notionUrl: notionData.url,
       requestId: requestId,
       submittedAt: submittedAt
     });
