@@ -42,37 +42,80 @@ async function sendTeamsNotification(payload, requestId, notionPageId) {
     return;
   }
 
-  const message = [
-    `📥 Nouvelle demande IT eShop`,
-    ``,
-    `**Référence** : ${requestId}`,
-    `**Titre** : ${payload.titre || ''}`,
-    `**Demandeur** : ${payload.demandeur || ''}`,
-    `**Email** : ${payload.email || ''}`,
-    `**Équipe** : ${payload.equipe || ''}`,
-    `**Nature** : ${payload.nature || ''}`,
-    `**Priorité** : ${payload.priorite || ''}`,
-    `**Périmètres** : ${Array.isArray(payload.labels) ? payload.labels.join(', ') : ''}`,
-    `**Description** : ${payload.description || ''}`,
-    `**Impact** : ${payload.impact || ''}`,
-    `**Deadline** : ${payload.deadline || 'Aucune'}`,
-    `**Lien** : ${payload.lien || 'Aucun'}`,
-    notionPageId ? `**Notion Page ID** : ${notionPageId}` : ''
-  ].filter(Boolean).join('\n');
+  const safe = (v) => v || '—';
+
+  const adaptiveCardPayload = {
+    type: "message",
+    attachments: [
+      {
+        contentType: "application/vnd.microsoft.card.adaptive",
+        contentUrl: null,
+        content: {
+          "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+          type: "AdaptiveCard",
+          version: "1.4",
+          body: [
+            {
+              type: "TextBlock",
+              text: "📥 Nouvelle demande IT eShop",
+              weight: "Bolder",
+              size: "Large",
+              wrap: true
+            },
+            {
+              type: "FactSet",
+              facts: [
+                { title: "Référence", value: safe(requestId) },
+                { title: "Titre", value: safe(payload.titre) },
+                { title: "Demandeur", value: safe(payload.demandeur) },
+                { title: "Email", value: safe(payload.email) },
+                { title: "Équipe", value: safe(payload.equipe) },
+                { title: "Nature", value: safe(payload.nature) },
+                { title: "Priorité", value: safe(payload.priorite) },
+                { title: "Périmètres", value: Array.isArray(payload.labels) && payload.labels.length ? payload.labels.join(', ') : '—' },
+                { title: "Deadline", value: safe(payload.deadline) }
+              ]
+            },
+            {
+              type: "TextBlock",
+              text: `Description : ${safe(payload.description)}`,
+              wrap: true,
+              spacing: "Medium"
+            },
+            {
+              type: "TextBlock",
+              text: `Impact : ${safe(payload.impact)}`,
+              wrap: true,
+              spacing: "Small"
+            }
+          ],
+          actions: payload.lien
+            ? [
+                {
+                  type: "Action.OpenUrl",
+                  title: "Ouvrir le lien",
+                  url: payload.lien
+                }
+              ]
+            : []
+        }
+      }
+    ]
+  };
 
   const teamsResponse = await fetch(TEAMS_WEBHOOK_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      title: "Nouvelle demande IT eShop",
-      text: message
-    })
+    body: JSON.stringify(adaptiveCardPayload)
   });
 
+  const responseText = await teamsResponse.text();
+
   if (!teamsResponse.ok) {
-    const txt = await teamsResponse.text();
-    throw new Error(`Erreur Teams ${teamsResponse.status}: ${txt}`);
+    throw new Error(`Erreur Teams ${teamsResponse.status}: ${responseText}`);
   }
+
+  console.log('[TEAMS] Réponse brute Teams:', responseText || '[vide]');
 }
 
 app.post('/submit', async function (req, res) {
