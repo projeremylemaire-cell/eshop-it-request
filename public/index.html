@@ -65,8 +65,6 @@
   .recap-tag { display:inline-block; font-size:12px; padding:3px 10px; border-radius:20px; background:var(--cyan-light); color:var(--cyan); font-weight:700; margin:2px 3px 2px 0; }
   .notice { display:flex; gap:12px; background:#f0f9ff; border:1px solid #bae6fd; border-radius:12px; padding:14px 16px; margin-top:18px; }
   .notice p { font-size:13px; color:#0369a1; line-height:1.5; }
-  .fallback-box { margin-top:16px; background:#fff7ed; border:1px solid #fdba74; border-radius:12px; padding:14px 16px; }
-  .fallback-box p { font-size:13px; color:#9a3412; line-height:1.6; }
   .footer { display:flex; align-items:center; padding:20px 32px; border-top:1px solid var(--slate-100); background:#f8fafc; gap:12px; }
   .spacer { flex:1; }
   .btn-secondary { padding:11px 20px; border-radius:10px; background:transparent; color:var(--slate-500); border:1.5px solid var(--slate-200); font-weight:600; font-size:14px; cursor:pointer; font-family:inherit; }
@@ -81,7 +79,6 @@
   .success p { font-size:14px; color:var(--slate-500); line-height:1.6; max-width:400px; margin:0 auto 10px; }
   .success-tags { display:flex; flex-wrap:wrap; gap:8px; justify-content:center; margin:20px 0 28px; }
   .success-tag { font-size:12px; padding:5px 13px; border-radius:20px; background:var(--slate-100); color:var(--slate-700); font-weight:600; }
-  .success-ref { margin-top:10px; font-size:14px; color:var(--slate-900); font-weight:700; }
   .btn-reset { padding:12px 32px; border-radius:12px; background:var(--blue-dark); color:#fff; border:none; font-weight:700; font-size:14px; cursor:pointer; font-family:inherit; }
   .error-banner { background:#fef2f2; border:1px solid #fecaca; border-radius:12px; padding:14px 16px; margin-top:16px; color:#dc2626; font-size:13px; font-weight:500; display:none; }
   .error-banner.show { display:block; }
@@ -105,62 +102,58 @@
         <div class="progress-item"><div class="p-dot" id="dot4">4</div><span class="p-label" id="lbl4">Validation</span></div>
       </div>
     </div>
-
     <div class="body">
       <div class="success" id="successView">
         <div class="success-icon">✓</div>
-        <h2>Demande envoyée</h2>
-        <p>Ta demande <strong id="successTitle"></strong> a bien été enregistrée dans Notion.</p>
-        <div class="success-ref">Référence : <span id="successRequestId">-</span></div>
+        <h2>Demande envoyée !</h2>
+        <p>Ta demande <strong id="successTitle"></strong> a bien été transmise au board Notion du CP Métier.</p>
+        <p>Tu recevras une notification Teams dès qu'elle sera traitée.</p>
         <div class="success-tags" id="successTags"></div>
-        <p>Tu peux conserver cette référence si tu as besoin de suivre la demande.</p>
-        <button class="btn-reset" type="button" onclick="resetForm()">Nouvelle demande</button>
+        <button class="btn-reset" onclick="resetForm()">Nouvelle demande</button>
       </div>
-
       <div class="step active" id="step1">
         <div class="field"><label>Titre de la demande <span class="req">*</span></label><input type="text" id="titre" placeholder="Ex: Mise à jour des filtres Algolia — catégorie Femme" oninput="clearError('titre')"><div class="error-msg" id="err-titre">Ce champ est obligatoire</div></div>
         <div class="field"><label>Ton nom / prénom <span class="req">*</span></label><input type="text" id="demandeur" placeholder="Ex: Marie Dupont" oninput="clearError('demandeur')"><div class="error-msg" id="err-demandeur">Ce champ est obligatoire</div></div>
         <div class="field"><label>Email Teams <span class="req">*</span> <span class="hint">— pour les notifications</span></label><input type="email" id="email" placeholder="marie.dupont@entreprise.com" oninput="clearError('email')"><div class="error-msg" id="err-email">Email valide obligatoire</div></div>
-        <div class="field"><label>Ton équipe <span class="req">*</span></label><select id="equipe" onchange="clearError('equipe')"><option value="">Sélectionne ton équipe</option><option>Marketing</option><option>Merchandising</option><option>IT Métier</option><option>Data</option><option>UX / UI</option><option>Direction</option></select><div class="error-msg" id="err-equipe">Sélectionne ton équipe</div></div>
+        
       </div>
-
       <div class="step" id="step2">
-        <div class="field"><label>Nature de la demande <span class="req">*</span></label><div class="chip-group" id="nature-group"><button type="button" class="chip" onclick="selectChip('nature',this,'blue')">Run</button><button type="button" class="chip" onclick="selectChip('nature',this,'blue')">Projet</button><button type="button" class="chip" onclick="selectChip('nature',this,'blue')">Quick Win</button><button type="button" class="chip" onclick="selectChip('nature',this,'blue')">Dette technique</button><button type="button" class="chip" onclick="selectChip('nature',this,'blue')">Correctif urgent</button></div><div class="error-msg" id="err-nature">Sélectionne la nature</div></div>
-        <div class="field"><label>Priorité <span class="req">*</span></label><div class="chip-group" id="priorite-group"><button type="button" class="chip" onclick="selectChip('priorite',this,'blue')">🔴 Critique</button><button type="button" class="chip" onclick="selectChip('priorite',this,'blue')">🟠 Haute</button><button type="button" class="chip" onclick="selectChip('priorite',this,'blue')">🟡 Moyenne</button><button type="button" class="chip" onclick="selectChip('priorite',this,'blue')">🟢 Basse</button></div><div class="error-msg" id="err-priorite">Sélectionne une priorité</div></div>
-        <div class="field"><label>Périmètre(s) <span class="req">*</span> <span class="hint">— plusieurs choix possibles</span></label><div class="chip-group" id="labels-group"><button type="button" class="chip" onclick="toggleChip(this)">Algolia</button><button type="button" class="chip" onclick="toggleChip(this)">Contentful</button><button type="button" class="chip" onclick="toggleChip(this)">Checkout</button><button type="button" class="chip" onclick="toggleChip(this)">CMS</button><button type="button" class="chip" onclick="toggleChip(this)">Search</button><button type="button" class="chip" onclick="toggleChip(this)">Analytics</button><button type="button" class="chip" onclick="toggleChip(this)">PIM</button><button type="button" class="chip" onclick="toggleChip(this)">DAM</button><button type="button" class="chip" onclick="toggleChip(this)">Autre</button></div><div class="error-msg" id="err-labels">Sélectionne au moins un périmètre</div></div>
+        <div class="field"><label>Nature de la demande <span class="req">*</span></label><div class="chip-group" id="nature-group"><button class="chip" onclick="selectChip('nature',this,'blue')">Projet</button><button class="chip" onclick="selectChip('nature',this,'blue')">Quick Win</button><button class="chip" onclick="selectChip('nature',this,'blue')">Dette technique</button><button class="chip" onclick="selectChip('nature',this,'blue')">Correctif urgent</button></div><div class="error-msg" id="err-nature">Sélectionne la nature</div></div>
+        <div class="field"><label>Priorité <span class="req">*</span></label><div class="chip-group" id="priorite-group"><button class="chip" onclick="selectChip('priorite',this,'blue')">🟠 Haute</button><button class="chip" onclick="selectChip('priorite',this,'blue')">🟡 Moyenne</button><button class="chip" onclick="selectChip('priorite',this,'blue')">🟢 Basse</button></div><div class="error-msg" id="err-priorite">Sélectionne une priorité</div></div>
+        <div class="field"><label>Périmètre(s) <span class="req">*</span> <span class="hint">— plusieurs choix possibles</span></label><div class="chip-group" id="labels-group"><button class="chip" onclick="toggleChip(this)">Algolia Search</button><button class="chip" onclick="toggleChip(this)">Algolia Reco</button><button class="chip" onclick="toggleChip(this)">Algolia Ranking</button><button class="chip" onclick="toggleChip(this)">Contentful</button><button class="chip" onclick="toggleChip(this)">Analytics</button><button class="chip" onclick="toggleChip(this)">AB/Test</button><button class="chip" onclick="toggleChip(this)">PIM</button><button class="chip" onclick="toggleChip(this)">Autre</button></div><div class="error-msg" id="err-labels">Sélectionne au moins un périmètre</div></div>
       </div>
-
       <div class="step" id="step3">
-        <div class="field"><label>Description <span class="req">*</span> <span class="hint">— contexte, problème, besoin attendu</span></label><textarea id="description" placeholder="Décris le contexte, le problème rencontré et le besoin attendu..." oninput="updateCharCount();clearError('description')"></textarea><div class="char-count"><span id="charCount">0</span> caractères</div><div class="error-msg" id="err-description">Décris ta demande (20 caractères minimum)</div></div>
-        <div class="field"><label>Impact métier <span class="req">*</span> <span class="hint">— que se passe-t-il si non traité ?</span></label><input type="text" id="impact" placeholder="Ex: Perte de conversion estimée à 5% sur la catégorie Femme" oninput="clearError('impact')"><div class="error-msg" id="err-impact">Ce champ est obligatoire</div></div>
-        <div class="two-col"><div class="field"><label>Deadline souhaitée</label><input type="date" id="deadline"></div><div class="field"><label>Lien / Maquette</label><input type="url" id="lien" placeholder="https://..."></div></div>
+        <div class="field"><label>🎯 Quel est le besoin ? <span class="req">*</span> <span class="hint">— Contexte, problème rencontré, ce que tu attends</span></label><textarea id="description" placeholder="Ex: Sur la page catégorie Femme, les résultats Algolia ne remontent pas les bons produits. On souhaite revoir la logique de ranking pour prioriser les articles en stock." oninput="updateCharCount();clearError('description')"></textarea><div class="char-count"><span id="charCount">0</span> caractères</div><div class="error-msg" id="err-description">Décris ta demande (20 caractères minimum)</div></div>
+        <div class="field"><label>📈 Quel est l'impact si non traité ? <span class="req">*</span> <span class="hint">— KPIs, revenus, expérience client, risque...</span></label><input type="text" id="impact" placeholder="Ex: Perte de conversion ~5% sur catégorie Femme, soit ~50K€/mois" oninput="clearError('impact')"><div class="error-msg" id="err-impact">Ce champ est obligatoire</div></div>
+        <div class="field"><label>✅ Quel est le résultat attendu ? <span class="req">*</span> <span class="hint">— Comment saura-t-on que c'est réussi ?</span></label><input type="text" id="resultat" placeholder="Ex: Les produits en stock apparaissent en priorité dans les 10 premiers résultats" oninput="clearError('resultat')"><div class="error-msg" id="err-resultat">Ce champ est obligatoire</div></div>
+        <div class="field"><label>💡 As-tu déjà exploré des pistes ? <span class="hint">— Optionnel : solutions envisagées, contraintes identifiées</span></label><input type="text" id="solution" placeholder="Ex: Modifier le poids du filtre stock dans la config Algolia"></div>
+        <div class="two-col"><div class="field"><label>📅 Deadline souhaitée</label><input type="date" id="deadline"></div><div class="field"><label>🔗 Lien / Maquette</label><input type="url" id="lien" placeholder="https://..."></div></div>
+        <div class="field"><label>🖼️ Capture d'écran <span class="hint">— Glisse ou clique pour joindre une image</span></label><div id="dropzone" style="border:2px dashed var(--slate-200);border-radius:10px;padding:20px;text-align:center;cursor:pointer;transition:all 0.15s;color:var(--slate-400);font-size:13px;" ondragover="event.preventDefault();this.style.borderColor='var(--blue)'" ondragleave="this.style.borderColor='var(--slate-200)'" ondrop="handleDrop(event)" onclick="document.getElementById('capture').click()">📎 Glisse une image ici ou clique pour sélectionner<br><span style="font-size:11px">PNG, JPG, GIF jusqu'à 5MB</span></div><input type="file" id="capture" accept="image/*" style="display:none" onchange="handleFile(this.files[0])"><div id="preview" style="margin-top:8px;display:none;"><img id="previewImg" style="max-width:100%;border-radius:8px;max-height:200px;object-fit:contain;"><button onclick="clearCapture()" style="display:block;margin-top:6px;font-size:12px;color:var(--red);background:none;border:none;cursor:pointer;">✕ Supprimer</button></div></div>
       </div>
-
       <div class="step" id="step4">
         <p class="recap-title">Vérifie ta demande avant envoi</p>
         <div class="recap-card" id="recapCard"></div>
-        <div class="notice"><span>ℹ️</span><p>Ta demande sera transmise au board Notion. Une notification Teams peut aussi être envoyée au channel de suivi.</p></div>
-        <div class="fallback-box">
-          <p><strong>En cas d’erreur :</strong> si le formulaire ne répond pas ou si l’envoi échoue, contacte le channel Teams de secours ou envoie un mail à l’adresse de fallback de l’équipe.</p>
-        </div>
+        <div class="notice"><span>ℹ️</span><p>Ta demande sera transmise au board Notion. Le CP Métier la reviewera et tu recevras une notification Teams à chaque changement de statut.</p></div>
         <div class="error-banner" id="errorBanner"></div>
       </div>
     </div>
-
     <div class="footer" id="formFooter">
-      <button type="button" class="btn-secondary" id="btnBack" onclick="prevStep()" style="display:none">← Retour</button>
+      <button class="btn-secondary" id="btnBack" onclick="prevStep()" style="display:none">← Retour</button>
       <div class="spacer"></div>
-      <button type="button" class="btn-primary" id="btnNext" onclick="nextStep()">Continuer →</button>
-      <button type="button" class="btn-submit" id="btnSubmit" onclick="submitForm()" style="display:none">✓ Envoyer la demande</button>
+      <button class="btn-primary" id="btnNext" onclick="nextStep()">Continuer →</button>
+      <button class="btn-submit" id="btnSubmit" onclick="submitForm()" style="display:none">✓ Envoyer la demande</button>
     </div>
   </div>
 </div>
-
 <script>
+  
+  
+  
+
   let currentStep = 1;
   const state = { nature:'', priorite:'', labels:[] };
 
-  function nextStep() { if(!validateStep(currentStep)) return; if(currentStep===3) buildRecap(); currentStep++; updateUI(); }
+  function nextStep() { if(!validateStep(currentStep))return; if(currentStep===3)buildRecap(); currentStep++; updateUI(); }
   function prevStep() { currentStep--; updateUI(); }
 
   function updateUI() {
@@ -170,135 +163,109 @@
     document.getElementById('btnNext').style.display=currentStep<4?'block':'none';
     document.getElementById('btnSubmit').style.display=currentStep===4?'block':'none';
     for(let i=1;i<=4;i++){
-      const dot=document.getElementById(`dot${i}`), lbl=document.getElementById(`lbl${i}`);
+      const dot=document.getElementById(`dot${i}`),lbl=document.getElementById(`lbl${i}`);
       dot.className='p-dot'; lbl.className='p-label';
-      if(i<currentStep){ dot.classList.add('done'); dot.textContent='✓'; lbl.classList.add('done'); }
-      else if(i===currentStep){ dot.classList.add('active'); dot.textContent=i; lbl.classList.add('active'); }
-      else { dot.textContent=i; }
-      if(i<4) document.getElementById(`line${i}`).className=`p-line${i<currentStep?' done':''}`;
+      if(i<currentStep){dot.classList.add('done');dot.textContent='✓';lbl.classList.add('done');}
+      else if(i===currentStep){dot.classList.add('active');dot.textContent=i;lbl.classList.add('active');}
+      else{dot.textContent=i;}
+      if(i<4)document.getElementById(`line${i}`).className=`p-line${i<currentStep?' done':''}`;
     }
   }
 
-  function selectChip(field,el,color){
-    el.closest('.chip-group').querySelectorAll('.chip').forEach(c=>c.className='chip');
-    el.classList.add(`selected-${color}`);
-    state[field]=el.textContent.trim();
-    clearError(field);
-  }
-
-  function toggleChip(el){
-    el.classList.toggle('selected-cyan');
-    state.labels=Array.from(document.querySelectorAll('#labels-group .chip.selected-cyan')).map(c=>c.textContent.trim());
-    clearError('labels');
-  }
+  function selectChip(field,el,color){el.closest('.chip-group').querySelectorAll('.chip').forEach(c=>c.className='chip');el.classList.add(`selected-${color}`);state[field]=el.textContent.trim();clearError(field);}
+  function toggleChip(el){el.classList.toggle('selected-cyan');state.labels=Array.from(document.querySelectorAll('#labels-group .chip.selected-cyan')).map(c=>c.textContent.trim());clearError('labels');}
 
   function validateStep(step){
     let valid=true;
-    if(step===1){
-      if(!v('titre')) valid=false;
-      if(!v('demandeur')) valid=false;
-      const email=document.getElementById('email').value.trim();
-      if(!email||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ showError('email'); valid=false; }
-      if(!v('equipe')) valid=false;
-    }
-    if(step===2){
-      if(!state.nature){ showError('nature'); valid=false; }
-      if(!state.priorite){ showError('priorite'); valid=false; }
-      if(state.labels.length===0){ showError('labels'); valid=false; }
-    }
-    if(step===3){
-      if(document.getElementById('description').value.trim().length<20){ showError('description'); valid=false; }
-      if(!v('impact')) valid=false;
-    }
+    if(step===1){if(!v('titre'))valid=false;if(!v('demandeur'))valid=false;const email=document.getElementById('email').value.trim();if(!email||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){showError('email');valid=false;}}
+    if(step===2){if(!state.nature){showError('nature');valid=false;}if(!state.priorite){showError('priorite');valid=false;}if(state.labels.length===0){showError('labels');valid=false;}}
+    if(step===3){if(document.getElementById('description').value.trim().length<20){showError('description');valid=false;}if(!v('impact'))valid=false;if(!v('resultat'))valid=false;}
     return valid;
   }
 
-  function v(id){ const el=document.getElementById(id); if(!el.value.trim()){ showError(id); return false; } return true; }
-  function showError(id){ const el=document.getElementById(id); if(el) el.classList.add('error'); const err=document.getElementById(`err-${id}`); if(err) err.classList.add('show'); }
-  function clearError(id){ const el=document.getElementById(id); if(el) el.classList.remove('error'); const err=document.getElementById(`err-${id}`); if(err) err.classList.remove('show'); }
-  function updateCharCount(){ document.getElementById('charCount').textContent=document.getElementById('description').value.length; }
-  function g(id){ return document.getElementById(id)?.value?.trim() || ''; }
-  function esc(s){ return (s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+  function v(id){const el=document.getElementById(id);if(!el.value.trim()){showError(id);return false;}return true;}
+  function showError(id){const el=document.getElementById(id);if(el)el.classList.add('error');const err=document.getElementById(`err-${id}`);if(err)err.classList.add('show');}
+  function clearError(id){const el=document.getElementById(id);if(el)el.classList.remove('error');const err=document.getElementById(`err-${id}`);if(err)err.classList.remove('show');}
+  function updateCharCount(){document.getElementById('charCount').textContent=document.getElementById('description').value.length;}
+  function g(id){return document.getElementById(id)?.value?.trim()||'';}
+  function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 
   function buildRecap(){
     const rows=[
-      {label:'Titre',value:g('titre')},
-      {label:'Demandeur',value:`${g('demandeur')} · ${g('equipe')}`},
-      {label:'Email',value:g('email')},
-      {label:'Nature',value:state.nature},
-      {label:'Priorité',value:state.priorite},
-      {label:'Périmètres',value:state.labels.map(l=>`<span class="recap-tag">${esc(l)}</span>`).join(''),html:true},
-      {label:'Description',value:g('description'),multiline:true},
-      {label:'Impact',value:g('impact')},
+      {label:'Titre',value:g('titre')},{label:'Demandeur',value:g('demandeur')},
+      {label:'Email',value:g('email')},{label:'Nature',value:state.nature},{label:'Priorité',value:state.priorite},
+      {label:'Périmètres',value:state.labels.map(l=>`<span class="recap-tag">${l}</span>`).join(''),html:true},
+      {label:'Description',value:g('description'),multiline:true},{label:'Impact',value:g('impact')},{label:'Résultat attendu',value:g('resultat')},g('solution')?{label:'Pistes explorées',value:g('solution')}:null,
       g('deadline')?{label:'Deadline',value:g('deadline')}:null,
       g('lien')?{label:'Lien',value:`<a href="${g('lien')}" target="_blank" style="color:var(--blue)">${esc(g('lien'))}</a>`,html:true}:null,
     ].filter(Boolean);
-
     document.getElementById('recapCard').innerHTML=rows.map(r=>`<div class="recap-row"><span class="recap-label">${r.label}</span><span class="recap-value" style="${r.multiline?'white-space:pre-wrap':''}">${r.html?r.value:esc(r.value)}</span></div>`).join('');
   }
 
-  async function submitForm() {
-    const btn = document.getElementById('btnSubmit');
-    const banner = document.getElementById('errorBanner');
-
+  async function submitForm(){
+    const btn=document.getElementById('btnSubmit');
+    const banner=document.getElementById('errorBanner');
     banner.classList.remove('show');
-    btn.disabled = true;
-    btn.textContent = '⏳ Envoi en cours...';
+    btn.disabled=true; btn.textContent='⏳ Envoi en cours...';
 
-    const payload = {
-      titre: g('titre'),
-      demandeur: g('demandeur'),
-      email: g('email'),
-      equipe: g('equipe'),
-      nature: state.nature,
-      priorite: state.priorite,
-      labels: state.labels,
-      description: g('description'),
-      impact: g('impact'),
-      deadline: g('deadline'),
-      lien: g('lien'),
+    const payload={
+      titre:g('titre'), demandeur:g('demandeur'), email:g('email'),
+      nature:state.nature, priorite:state.priorite,
+      labels:state.labels, description:g('description'),
+      impact:g('impact'), resultat:g('resultat'), solution:g('solution'), deadline:g('deadline'), lien:g('lien'),
     };
 
     try {
-      const res = await fetch('/submit', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+      const res = await fetch('https://eoptiz0qmaybgmu.m.pipedream.net', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify(payload)
       });
 
       const text = await res.text();
       let data;
-      try {
-        data = JSON.parse(text);
-      } catch (e) {
-        throw new Error(`Réponse invalide: ${text.substring(0, 120)}`);
-      }
+      try { data = JSON.parse(text); } catch(e) { throw new Error(`Réponse invalide: ${text.substring(0,100)}`); }
+      if(!res.ok) throw new Error(data.message||`Erreur ${res.status}`);
 
-      if (!res.ok) throw new Error(data.error || `Erreur ${res.status}`);
-
-      document.getElementById('successTitle').textContent = `"${g('titre')}"`;
-      document.getElementById('successRequestId').textContent = data.requestId || '-';
-      document.getElementById('successTags').innerHTML =
-        [state.nature, state.priorite, ...state.labels]
-          .filter(Boolean)
-          .map(t => `<span class="success-tag">${esc(t)}</span>`)
-          .join('');
-
-      document.querySelector('.header').style.display = 'none';
-      document.querySelectorAll('.step').forEach(step => step.style.display = 'none');
-      document.getElementById('formFooter').style.display = 'none';
-      document.getElementById('errorBanner').classList.remove('show');
+      document.getElementById('successTitle').textContent=`"${g('titre')}"`;
+      document.getElementById('successTags').innerHTML=[state.nature,state.priorite,...state.labels].map(t=>`<span class="success-tag">${t}</span>`).join('');
+      document.querySelector('.header').style.display='none';
+      document.getElementById('formFooter').style.display='none';
+      document.querySelector('.body').innerHTML='';
       document.getElementById('successView').classList.add('show');
-
-    } catch (err) {
-      btn.disabled = false;
-      btn.textContent = '✓ Envoyer la demande';
-      banner.textContent = `❌ L'envoi a échoué : ${err.message}. Si le problème persiste, utilise le channel Teams ou l'adresse mail de secours.`;
+      document.querySelector('.body').appendChild(document.getElementById('successView'));
+    } catch(err){
+      btn.disabled=false; btn.textContent='✓ Envoyer la demande';
+      banner.textContent=`❌ Erreur : ${err.message}`;
       banner.classList.add('show');
     }
   }
 
-  function resetForm(){ location.reload(); }
+  function resetForm(){location.reload();}
+  let captureBase64 = null;
+  function handleFile(file){
+    if(!file)return;
+    const reader=new FileReader();
+    reader.onload=function(e){
+      captureBase64=e.target.result;
+      document.getElementById('previewImg').src=e.target.result;
+      document.getElementById('preview').style.display='block';
+      document.getElementById('dropzone').style.display='none';
+    };
+    reader.readAsDataURL(file);
+  }
+  function handleDrop(e){
+    e.preventDefault();
+    document.getElementById('dropzone').style.borderColor='var(--slate-200)';
+    const file=e.dataTransfer.files[0];
+    if(file&&file.type.startsWith('image/'))handleFile(file);
+  }
+  function clearCapture(){
+    captureBase64=null;
+    document.getElementById('preview').style.display='none';
+    document.getElementById('dropzone').style.display='block';
+    document.getElementById('capture').value='';
+  }
 </script>
 </body>
 </html>
