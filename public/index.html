@@ -227,13 +227,29 @@
       try { data = JSON.parse(text); } catch(e) { throw new Error(`Réponse invalide: ${text.substring(0,100)}`); }
       if(!res.ok) throw new Error(data.message||`Erreur ${res.status}`);
 
-      document.getElementById('successTitle').textContent=`"${g('titre')}"`;
-      document.getElementById('successTags').innerHTML=[state.nature,state.priorite,...state.labels].map(t=>`<span class="success-tag">${t}</span>`).join('');
+      // Affichage succes avec reference
+      const ref = data.requestId || '';
+      const successView = document.getElementById('successView');
+      const bodyEl = document.querySelector('.body');
+      // Deplacer AVANT de vider
+      bodyEl.appendChild(successView);
+      document.getElementById('successTitle').textContent='"'+g('titre')+'"';
+      if(ref){
+        const existing = document.getElementById('ref-display');
+        if(!existing){
+          const refEl = document.createElement('p');
+          refEl.id = 'ref-display';
+          refEl.style.cssText='font-size:13px;color:#059669;font-weight:700;margin:8px auto;';
+          refEl.textContent='Reference : '+ref;
+          successView.querySelector('h2').after(refEl);
+        }
+      }
+      document.getElementById('successTags').innerHTML=[state.nature,state.priorite,...state.labels].map(t=>'<span class="success-tag">'+t+'</span>').join('');
       document.querySelector('.header').style.display='none';
       document.getElementById('formFooter').style.display='none';
-      document.querySelector('.body').innerHTML='';
-      document.getElementById('successView').classList.add('show');
-      document.querySelector('.body').appendChild(document.getElementById('successView'));
+      bodyEl.innerHTML='';
+      bodyEl.appendChild(successView);
+      successView.classList.add('show');
     } catch(err){
       btn.disabled=false; btn.textContent='✓ Envoyer la demande';
       banner.textContent=`❌ Erreur : ${err.message}`;
