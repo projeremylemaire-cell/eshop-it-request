@@ -230,17 +230,27 @@
       try { data = JSON.parse(text); } catch(e) { throw new Error(`Réponse invalide: ${text.substring(0,100)}`); }
       if(!res.ok) throw new Error(data.message||`Erreur ${res.status}`);
 
-      const sv = document.getElementById('successView');
-      document.getElementById('successTitle').textContent='"'+g('titre')+'"';
-      document.getElementById('successTags').innerHTML=[state.nature,state.priorite,...state.labels].map(t=>'<span class="success-tag">'+t+'</span>').join('');
-      // Déplacer successView AVANT de vider le body
-      document.body.appendChild(sv);
+      // Masquer header et footer
       document.querySelector('.header').style.display='none';
       document.getElementById('formFooter').style.display='none';
-      document.querySelector('.body').innerHTML='';
-      sv.style.cssText='display:block;text-align:center;padding:52px 32px;animation:fadeIn 0.4s ease;';
-      document.querySelector('.body').appendChild(sv);
-      loadFunGif();
+      // Construire l'écran de succès dynamiquement
+      const tags = [state.nature, state.priorite, ...state.labels]
+        .map(t=>'<span class="success-tag">'+t+'</span>').join('');
+      const gifId = 'gif_'+Date.now();
+      const wrapId = 'wrap_'+Date.now();
+      document.querySelector('.body').innerHTML = `
+        <div style="text-align:center;padding:52px 24px;">
+          <div style="width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,#059669,#10b981);color:#fff;font-size:32px;display:flex;align-items:center;justify-content:center;margin:0 auto 22px;box-shadow:0 8px 24px rgba(5,150,105,0.3);">✓</div>
+          <h2 style="font-size:26px;font-weight:800;color:#0f172a;margin-bottom:12px;">C'est dans la boîte ! 🎯</h2>
+          <p style="font-size:14px;color:#64748b;line-height:1.6;max-width:400px;margin:0 auto 8px;">Ta demande <strong>"${g('titre')}"</strong> a bien atterri sur le board Notion du CP Métier.</p>
+          <p style="font-size:13px;color:#94a3b8;margin:0 auto 16px;max-width:380px;">Je reviendrai vers toi si j'ai besoin de précisions. Je te tiendrai informé(e) de l'avancement via Teams 👀</p>
+          <div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:16px 0 20px;">${tags}</div>
+          <div id="${wrapId}" style="margin:0 auto 20px;max-width:260px;border-radius:14px;overflow:hidden;display:none;box-shadow:0 4px 20px rgba(0,0,0,0.1);">
+            <img id="${gifId}" style="width:100%;display:block;">
+          </div>
+          <button onclick="location.reload()" style="padding:12px 32px;border-radius:12px;background:#1e3a8a;color:#fff;border:none;font-weight:700;font-size:14px;cursor:pointer;font-family:inherit;">Nouvelle demande</button>
+        </div>`;
+      loadFunGif(gifId, wrapId);
     } catch(err){
       btn.disabled=false; btn.textContent='✓ Envoyer la demande';
       banner.textContent=`❌ Erreur : ${err.message}`;
@@ -249,18 +259,21 @@
   }
 
   function resetForm(){location.reload();}
-  async function loadFunGif(){
-    try {
-      const terms = ['lightbulb idea funny', 'great idea celebration', 'eureka excited'];
-      const q = terms[Math.floor(Math.random()*terms.length)];
-      const res = await fetch(`https://api.giphy.com/v1/gifs/random?api_key=dc6zaTOxFJmzC&tag=${encodeURIComponent(q)}&rating=g`);
-      const data = await res.json();
-      const url = data?.data?.images?.original?.url;
-      if(url){
-        document.getElementById('successGif').src = url;
-        document.getElementById('successGifWrap').style.display = 'block';
-      }
-    } catch(e) { /* le gif est un bonus, on ignore si ça échoue */ }
+  function loadFunGif(imgId, wrapId){
+    const gifs = [
+      'https://media.giphy.com/media/3o7abKhOpu0NwenH3O/giphy.gif',
+      'https://media.giphy.com/media/l0MYt5jPR6QX5pnqM/giphy.gif',
+      'https://media.giphy.com/media/xT9IgG50Lg7russbgY/giphy.gif',
+      'https://media.giphy.com/media/3ohzdIuqJoo8QdKlnW/giphy.gif',
+      'https://media.giphy.com/media/26tOZ42Mg6pbTUPHW/giphy.gif',
+    ];
+    const url = gifs[Math.floor(Math.random()*gifs.length)];
+    setTimeout(function(){
+      const img = document.getElementById(imgId);
+      const wrap = document.getElementById(wrapId);
+      if(img && wrap){ img.src=url; img.onload=function(){ wrap.style.display='block'; }; }
+    }, 100);
+    if(false catch(e) { /* le gif est un bonus, on ignore si ça échoue */ }
   }
 
 </script>
