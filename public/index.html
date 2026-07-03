@@ -105,10 +105,13 @@
     <div class="body">
       <div class="success" id="successView">
         <div class="success-icon">✓</div>
-        <h2>Demande envoyée !</h2>
-        <p>Ta demande <strong id="successTitle"></strong> a bien été transmise au board Notion du CP Métier.</p>
-        <p>Tu recevras une notification Teams dès qu'elle sera traitée.</p>
+        <h2>C'est dans la boîte ! 🎯</h2>
+        <p>Ta demande <strong id="successTitle"></strong> a bien atterri sur le board Notion du CP Métier.</p>
+        <p style="font-size:13px;color:#94a3b8;margin-top:4px;">Je reviendrai vers toi si j'ai besoin de précisions. Je te tiendrai informé(e) de l'avancement via Teams 👀</p>
         <div class="success-tags" id="successTags"></div>
+        <div id="successGifWrap" style="margin:20px auto 8px;max-width:260px;border-radius:14px;overflow:hidden;display:none;box-shadow:0 4px 20px rgba(0,0,0,0.1);">
+          <img id="successGif" style="width:100%;display:block;">
+        </div>
         <button class="btn-reset" onclick="resetForm()">Nouvelle demande</button>
       </div>
       <div class="step active" id="step1">
@@ -118,8 +121,8 @@
         
       </div>
       <div class="step" id="step2">
-        <div class="field"><label>Nature de la demande <span class="req">*</span></label><div class="chip-group" id="nature-group"><button class="chip" onclick="selectChip('nature',this,'blue')">Projet</button><button class="chip" onclick="selectChip('nature',this,'blue')">Quick Win</button><button class="chip" onclick="selectChip('nature',this,'blue')">Dette technique</button><button class="chip" onclick="selectChip('nature',this,'blue')">Correctif urgent</button></div><div class="error-msg" id="err-nature">Sélectionne la nature</div></div>
-        <div class="field"><label>Priorité <span class="req">*</span></label><div class="chip-group" id="priorite-group"><button class="chip" onclick="selectChip('priorite',this,'blue')">🟠 Haute</button><button class="chip" onclick="selectChip('priorite',this,'blue')">🟡 Moyenne</button><button class="chip" onclick="selectChip('priorite',this,'blue')">🟢 Basse</button></div><div class="error-msg" id="err-priorite">Sélectionne une priorité</div></div>
+        <div class="field"><label>Nature de la demande <span class="req">*</span></label><div class="chip-group" id="nature-group"><button class="chip" onclick="selectChip('nature',this,'blue')">Projet</button><button class="chip" onclick="selectChip('nature',this,'blue')">Quick Win</button><button class="chip" onclick="selectChip('nature',this,'blue')">Dette technique</button></div><div class="error-msg" id="err-nature">Sélectionne la nature</div></div>
+        <div class="field"><label>Ta priorité <span class="req">*</span> <span class="hint">— à quel point c'est urgent pour toi</span></label><div class="chip-group" id="priorite-group"><button class="chip" onclick="selectChip('priorite',this,'blue')">🟠 Haute</button><button class="chip" onclick="selectChip('priorite',this,'blue')">🟡 Moyenne</button><button class="chip" onclick="selectChip('priorite',this,'blue')">🟢 Basse</button></div><div class="error-msg" id="err-priorite">Sélectionne une priorité</div></div>
         <div class="field"><label>Périmètre(s) <span class="req">*</span> <span class="hint">— plusieurs choix possibles</span></label><div class="chip-group" id="labels-group"><button class="chip" onclick="toggleChip(this)">Algolia Search</button><button class="chip" onclick="toggleChip(this)">Algolia Reco</button><button class="chip" onclick="toggleChip(this)">Algolia Ranking</button><button class="chip" onclick="toggleChip(this)">Contentful</button><button class="chip" onclick="toggleChip(this)">Analytics</button><button class="chip" onclick="toggleChip(this)">AB/Test</button><button class="chip" onclick="toggleChip(this)">PIM</button><button class="chip" onclick="toggleChip(this)">Autre</button></div><div class="error-msg" id="err-labels">Sélectionne au moins un périmètre</div></div>
       </div>
       <div class="step" id="step3">
@@ -128,12 +131,12 @@
         <div class="field"><label>✅ Quel est le résultat attendu ? <span class="req">*</span> <span class="hint">— Comment saura-t-on que c'est réussi ?</span></label><input type="text" id="resultat" placeholder="Ex: Les produits en stock apparaissent en priorité dans les 10 premiers résultats" oninput="clearError('resultat')"><div class="error-msg" id="err-resultat">Ce champ est obligatoire</div></div>
         <div class="field"><label>💡 As-tu déjà exploré des pistes ? <span class="hint">— Optionnel : solutions envisagées, contraintes identifiées</span></label><input type="text" id="solution" placeholder="Ex: Modifier le poids du filtre stock dans la config Algolia"></div>
         <div class="two-col"><div class="field"><label>📅 Deadline souhaitée</label><input type="date" id="deadline"></div><div class="field"><label>🔗 Lien / Maquette</label><input type="url" id="lien" placeholder="https://..."></div></div>
-        <div class="field"><label>🖼️ Capture d'écran <span class="hint">— Glisse ou clique pour joindre une image</span></label><div id="dropzone" style="border:2px dashed var(--slate-200);border-radius:10px;padding:20px;text-align:center;cursor:pointer;transition:all 0.15s;color:var(--slate-400);font-size:13px;" ondragover="event.preventDefault();this.style.borderColor='var(--blue)'" ondragleave="this.style.borderColor='var(--slate-200)'" ondrop="handleDrop(event)" onclick="document.getElementById('capture').click()">📎 Glisse une image ici ou clique pour sélectionner<br><span style="font-size:11px">PNG, JPG, GIF jusqu'à 5MB</span></div><input type="file" id="capture" accept="image/*" style="display:none" onchange="handleFile(this.files[0])"><div id="preview" style="margin-top:8px;display:none;"><img id="previewImg" style="max-width:100%;border-radius:8px;max-height:200px;object-fit:contain;"><button onclick="clearCapture()" style="display:block;margin-top:6px;font-size:12px;color:var(--red);background:none;border:none;cursor:pointer;">✕ Supprimer</button></div></div>
+        
       </div>
       <div class="step" id="step4">
         <p class="recap-title">Vérifie ta demande avant envoi</p>
         <div class="recap-card" id="recapCard"></div>
-        <div class="notice"><span>ℹ️</span><p>Ta demande sera transmise au board Notion. Le CP Métier la reviewera et tu recevras une notification Teams à chaque changement de statut.</p></div>
+        <div class="notice"><span>ℹ️</span><p>Ta demande sera transmise au CP Métier. Je reviendrai vers toi si j'ai besoin d'informations complémentaires, et je te tiendrai informé(e) de l'avancement via Teams.</p></div>
         <div class="error-banner" id="errorBanner"></div>
       </div>
     </div>
@@ -216,7 +219,7 @@
     };
 
     try {
-     const res = await fetch('/submit', {
+      const res = await fetch('https://eoptiz0qmaybgmu.m.pipedream.net', {
         method:'POST',
         headers:{'Content-Type':'application/json'},
         body:JSON.stringify(payload)
@@ -227,29 +230,14 @@
       try { data = JSON.parse(text); } catch(e) { throw new Error(`Réponse invalide: ${text.substring(0,100)}`); }
       if(!res.ok) throw new Error(data.message||`Erreur ${res.status}`);
 
-      // Affichage succes avec reference
-      const ref = data.requestId || '';
-      const successView = document.getElementById('successView');
-      const bodyEl = document.querySelector('.body');
-      // Deplacer AVANT de vider
-      bodyEl.appendChild(successView);
-      document.getElementById('successTitle').textContent='"'+g('titre')+'"';
-      if(ref){
-        const existing = document.getElementById('ref-display');
-        if(!existing){
-          const refEl = document.createElement('p');
-          refEl.id = 'ref-display';
-          refEl.style.cssText='font-size:13px;color:#059669;font-weight:700;margin:8px auto;';
-          refEl.textContent='Reference : '+ref;
-          successView.querySelector('h2').after(refEl);
-        }
-      }
-      document.getElementById('successTags').innerHTML=[state.nature,state.priorite,...state.labels].map(t=>'<span class="success-tag">'+t+'</span>').join('');
+      document.getElementById('successTitle').textContent=`"${g('titre')}"`;
+      document.getElementById('successTags').innerHTML=[state.nature,state.priorite,...state.labels].map(t=>`<span class="success-tag">${t}</span>`).join('');
       document.querySelector('.header').style.display='none';
       document.getElementById('formFooter').style.display='none';
-      bodyEl.innerHTML='';
-      bodyEl.appendChild(successView);
-      successView.classList.add('show');
+      document.querySelector('.body').innerHTML='';
+      document.getElementById('successView').classList.add('show');
+      document.querySelector('.body').appendChild(document.getElementById('successView'));
+      loadFunGif();
     } catch(err){
       btn.disabled=false; btn.textContent='✓ Envoyer la demande';
       banner.textContent=`❌ Erreur : ${err.message}`;
@@ -258,30 +246,20 @@
   }
 
   function resetForm(){location.reload();}
-  let captureBase64 = null;
-  function handleFile(file){
-    if(!file)return;
-    const reader=new FileReader();
-    reader.onload=function(e){
-      captureBase64=e.target.result;
-      document.getElementById('previewImg').src=e.target.result;
-      document.getElementById('preview').style.display='block';
-      document.getElementById('dropzone').style.display='none';
-    };
-    reader.readAsDataURL(file);
+  async function loadFunGif(){
+    try {
+      const terms = ['lightbulb idea funny', 'great idea celebration', 'eureka excited'];
+      const q = terms[Math.floor(Math.random()*terms.length)];
+      const res = await fetch(`https://api.giphy.com/v1/gifs/random?api_key=dc6zaTOxFJmzC&tag=${encodeURIComponent(q)}&rating=g`);
+      const data = await res.json();
+      const url = data?.data?.images?.original?.url;
+      if(url){
+        document.getElementById('successGif').src = url;
+        document.getElementById('successGifWrap').style.display = 'block';
+      }
+    } catch(e) { /* le gif est un bonus, on ignore si ça échoue */ }
   }
-  function handleDrop(e){
-    e.preventDefault();
-    document.getElementById('dropzone').style.borderColor='var(--slate-200)';
-    const file=e.dataTransfer.files[0];
-    if(file&&file.type.startsWith('image/'))handleFile(file);
-  }
-  function clearCapture(){
-    captureBase64=null;
-    document.getElementById('preview').style.display='none';
-    document.getElementById('dropzone').style.display='block';
-    document.getElementById('capture').value='';
-  }
+
 </script>
 </body>
 </html>
