@@ -1,134 +1,265 @@
-const express = require('express');
-const path = require('path');
-
-const app = express();
-app.use(express.json({ limit: '10mb' }));
-app.use(express.static(path.join(__dirname, 'public')));
-
-const NOTION_TOKEN = process.env.NOTION_TOKEN;
-const NOTION_DB_ID = "ad929c54-d71c-40a2-978d-a0fa22222dd1";
-const TEAMS_WEBHOOK_URL = "https://default0e2f240d11ec48d08dbe8871cf2c17.70.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/c573e397a5704bcdadadb234bf23ad85/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=Z66fmshFqvS4S8r4Hp34pX6TUnFYkQYEM6HbWU9bc1s";
-
-async function notifyTeams(payload, notionPageUrl) {
-  try {
-    var labels = (payload.labels || []).join(', ') || '—';
-    var card = {
-      "type": "message",
-      "attachments": [
-        {
-          "contentType": "application/vnd.microsoft.card.adaptive",
-          "content": {
-            "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
-            "type": "AdaptiveCard",
-            "version": "1.4",
-            "body": [
-              {
-                "type": "TextBlock",
-                "text": "🚀 Nouvelle demande eShop !",
-                "weight": "Bolder",
-                "size": "Large",
-                "color": "Accent",
-                "wrap": true
-              },
-              {
-                "type": "TextBlock",
-                "text": payload.titre || "Sans titre",
-                "weight": "Bolder",
-                "size": "Medium",
-                "wrap": true
-              },
-              {
-                "type": "FactSet",
-                "facts": [
-                  { "title": "👤 Demandeur", "value": payload.demandeur || "—" },
-                  { "title": "🏷️ Nature", "value": payload.nature || "—" },
-                  { "title": "⚡ Priorité", "value": payload.priorite || "—" },
-                  { "title": "🎯 Périmètres", "value": labels }
-                ]
-              },
-              {
-                "type": "TextBlock",
-                "text": payload.description || "",
-                "wrap": true,
-                "isSubtle": true,
-                "spacing": "Medium"
-              }
-            ],
-            "actions": notionPageUrl ? [
-              {
-                "type": "Action.OpenUrl",
-                "title": "Voir dans Notion",
-                "url": notionPageUrl
-              }
-            ] : []
-          }
-        }
-      ]
-    };
-
-    await fetch(TEAMS_WEBHOOK_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(card)
-    });
-  } catch (e) {
-    // La notification Teams ne doit jamais faire échouer la création de la fiche
-    console.log('Teams notify error:', e.message);
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>eShop · Demande IT</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --blue: #1d4ed8; --blue-light: #eff6ff; --blue-dark: #1e3a8a;
+    --green: #059669; --red: #ef4444; --cyan: #0891b2; --cyan-light: #ecfeff;
+    --slate-100: #f1f5f9; --slate-200: #e2e8f0; --slate-400: #94a3b8;
+    --slate-500: #64748b; --slate-700: #334155; --slate-900: #0f172a;
   }
-}
+  body { font-family: 'Plus Jakarta Sans', sans-serif; background: #f0f4ff; min-height: 100vh; padding: 32px 16px 64px; background-image: radial-gradient(ellipse at 20% 20%, rgba(29,78,216,0.08) 0%, transparent 60%), radial-gradient(ellipse at 80% 80%, rgba(5,150,105,0.06) 0%, transparent 60%); }
+  .container { max-width: 640px; margin: 0 auto; }
+  .card { background: #fff; border-radius: 24px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.07), 0 25px 60px -15px rgba(0,0,0,0.12); overflow: hidden; animation: slideUp 0.4s ease; }
+  @keyframes slideUp { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+  .header { background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 60%, #3b82f6 100%); padding: 28px 32px 26px; color: #fff; position: relative; overflow: hidden; }
+  .header::before { content:''; position:absolute; top:-40px; right:-40px; width:180px; height:180px; border-radius:50%; background:rgba(255,255,255,0.05); }
+  .header-top { display:flex; justify-content:space-between; align-items:center; margin-bottom:18px; position:relative; z-index:1; }
+  .logo { display:flex; align-items:center; gap:8px; font-size:13px; font-weight:700; letter-spacing:0.05em; opacity:0.9; }
+  .logo-icon { width:28px; height:28px; background:rgba(255,255,255,0.2); border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:14px; }
+  .step-badge { font-size:12px; font-weight:700; background:rgba(255,255,255,0.2); padding:5px 12px; border-radius:20px; }
+  .header h1 { font-size:26px; font-weight:800; letter-spacing:-0.03em; margin-bottom:6px; position:relative; z-index:1; }
+  .header p { font-size:13.5px; opacity:0.75; margin-bottom:24px; position:relative; z-index:1; }
+  .progress { display:flex; align-items:center; position:relative; z-index:1; }
+  .progress-item { display:flex; align-items:center; flex:1; }
+  .progress-item:last-child { flex:0; }
+  .p-dot { width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; flex-shrink:0; transition:all 0.3s; background:rgba(255,255,255,0.2); color:rgba(255,255,255,0.6); }
+  .p-dot.active { background:#fff; color:var(--blue); }
+  .p-dot.done { background:var(--green); color:#fff; }
+  .p-label { font-size:11px; margin-left:7px; font-weight:500; opacity:0.7; transition:all 0.3s; white-space:nowrap; }
+  .p-label.active { opacity:1; font-weight:700; }
+  .p-line { flex:1; height:2px; background:rgba(255,255,255,0.2); margin:0 8px; border-radius:1px; transition:background 0.3s; }
+  .p-line.done { background:var(--green); }
+  .body { padding:32px 32px 24px; }
+  .step { display:none; animation:fadeIn 0.25s ease; }
+  .step.active { display:block; }
+  @keyframes fadeIn { from { opacity:0; transform:translateX(10px); } to { opacity:1; transform:translateX(0); } }
+  .field { margin-bottom:20px; }
+  .field label { display:block; font-size:13px; font-weight:700; color:var(--slate-700); margin-bottom:7px; }
+  .req { color:var(--red); margin-left:3px; }
+  .hint { font-weight:400; color:var(--slate-400); font-size:12px; }
+  input, select, textarea { width:100%; padding:11px 14px; border-radius:10px; border:1.5px solid var(--slate-200); font-size:14px; color:var(--slate-900); background:#fff; font-family:inherit; outline:none; transition:border-color 0.15s, box-shadow 0.15s; appearance:none; }
+  input:focus, select:focus, textarea:focus { border-color:var(--blue); box-shadow:0 0 0 3px rgba(37,99,235,0.1); }
+  input.error, select.error, textarea.error { border-color:var(--red); }
+  textarea { min-height:110px; resize:vertical; }
+  select { background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 12px center; padding-right:36px; }
+  .error-msg { font-size:12px; color:var(--red); font-weight:600; margin-top:5px; display:none; }
+  .error-msg.show { display:block; }
+  .char-count { font-size:11px; color:var(--slate-400); text-align:right; margin-top:4px; }
+  .two-col { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  .chip-group { display:flex; flex-wrap:wrap; gap:8px; margin-top:2px; }
+  .chip { padding:8px 15px; border-radius:20px; border:1.5px solid var(--slate-200); background:#fff; font-size:13px; font-weight:500; color:var(--slate-500); cursor:pointer; transition:all 0.15s; font-family:inherit; }
+  .chip.selected-blue { border-color:var(--blue); background:var(--blue-light); color:var(--blue); font-weight:700; }
+  .chip.selected-cyan { border-color:var(--cyan); background:var(--cyan-light); color:var(--cyan); font-weight:700; }
+  .recap-title { font-size:13px; color:var(--slate-500); font-weight:500; margin-bottom:14px; }
+  .recap-card { border:1.5px solid var(--slate-200); border-radius:14px; overflow:hidden; }
+  .recap-row { display:flex; gap:14px; padding:12px 16px; border-bottom:1px solid var(--slate-100); align-items:flex-start; }
+  .recap-row:last-child { border-bottom:none; }
+  .recap-label { font-size:11px; font-weight:700; color:var(--slate-400); width:90px; flex-shrink:0; text-transform:uppercase; letter-spacing:0.06em; padding-top:2px; }
+  .recap-value { font-size:13.5px; color:var(--slate-900); flex:1; line-height:1.5; }
+  .recap-tag { display:inline-block; font-size:12px; padding:3px 10px; border-radius:20px; background:var(--cyan-light); color:var(--cyan); font-weight:700; margin:2px 3px 2px 0; }
+  .notice { display:flex; gap:12px; background:#f0f9ff; border:1px solid #bae6fd; border-radius:12px; padding:14px 16px; margin-top:18px; }
+  .notice p { font-size:13px; color:#0369a1; line-height:1.5; }
+  .footer { display:flex; align-items:center; padding:20px 32px; border-top:1px solid var(--slate-100); background:#f8fafc; gap:12px; }
+  .spacer { flex:1; }
+  .btn-secondary { padding:11px 20px; border-radius:10px; background:transparent; color:var(--slate-500); border:1.5px solid var(--slate-200); font-weight:600; font-size:14px; cursor:pointer; font-family:inherit; }
+  .btn-primary { padding:11px 24px; border-radius:10px; background:var(--blue); color:#fff; border:none; font-weight:700; font-size:14px; cursor:pointer; font-family:inherit; box-shadow:0 4px 12px rgba(37,99,235,0.3); }
+  .btn-submit { padding:11px 26px; border-radius:10px; background:linear-gradient(135deg,#059669,#10b981); color:#fff; border:none; font-weight:700; font-size:14px; cursor:pointer; font-family:inherit; box-shadow:0 4px 12px rgba(5,150,105,0.3); transition:all 0.15s; }
+  .btn-submit:disabled { opacity:0.6; cursor:not-allowed; }
+  .success { display:none; text-align:center; padding:52px 32px; animation:fadeIn 0.4s ease; }
+  .success.show { display:block; }
+  .success-icon { width:72px; height:72px; border-radius:50%; background:linear-gradient(135deg,#059669,#10b981); color:#fff; font-size:32px; display:flex; align-items:center; justify-content:center; margin:0 auto 22px; box-shadow:0 8px 24px rgba(5,150,105,0.3); animation:pop 0.5s cubic-bezier(0.175,0.885,0.32,1.275); }
+  @keyframes pop { from { transform:scale(0); opacity:0; } to { transform:scale(1); opacity:1; } }
+  .success h2 { font-size:26px; font-weight:800; color:var(--slate-900); margin-bottom:12px; }
+  .success p { font-size:14px; color:var(--slate-500); line-height:1.6; max-width:400px; margin:0 auto 10px; }
+  .success-tags { display:flex; flex-wrap:wrap; gap:8px; justify-content:center; margin:20px 0 28px; }
+  .success-tag { font-size:12px; padding:5px 13px; border-radius:20px; background:var(--slate-100); color:var(--slate-700); font-weight:600; }
+  .btn-reset { padding:12px 32px; border-radius:12px; background:var(--blue-dark); color:#fff; border:none; font-weight:700; font-size:14px; cursor:pointer; font-family:inherit; }
+  .error-banner { background:#fef2f2; border:1px solid #fecaca; border-radius:12px; padding:14px 16px; margin-top:16px; color:#dc2626; font-size:13px; font-weight:500; display:none; }
+  .error-banner.show { display:block; }
+  @media (max-width:480px) { .two-col { grid-template-columns:1fr; } .body { padding:24px 20px; } .header { padding:22px 20px 20px; } .footer { padding:16px 20px; } }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="card" id="mainCard">
+    <div class="header">
+      <div class="header-top">
+        <div class="logo"><div class="logo-icon">⬡</div>eShop · IT Request</div>
+        <span class="step-badge" id="stepBadge">1 / 4</span>
+      </div>
+      <h1>Nouvelle demande</h1>
+      <p>Soumets ta demande au CP Métier — sans passer par Jira</p>
+      <div class="progress">
+        <div class="progress-item"><div class="p-dot active" id="dot1">1</div><span class="p-label active" id="lbl1">Identification</span><div class="p-line" id="line1"></div></div>
+        <div class="progress-item"><div class="p-dot" id="dot2">2</div><span class="p-label" id="lbl2">Périmètre</span><div class="p-line" id="line2"></div></div>
+        <div class="progress-item"><div class="p-dot" id="dot3">3</div><span class="p-label" id="lbl3">Description</span><div class="p-line" id="line3"></div></div>
+        <div class="progress-item"><div class="p-dot" id="dot4">4</div><span class="p-label" id="lbl4">Validation</span></div>
+      </div>
+    </div>
+    <div class="body">
+      <div class="success" id="successView">
+        <div class="success-icon">✓</div>
+        <h2>C'est dans la boîte ! 🎯</h2>
+        <p>Ta demande <strong id="successTitle"></strong> a bien atterri sur le board Notion du CP Métier.</p>
+        <p style="font-size:13px;color:#94a3b8;margin-top:4px;">Je reviendrai vers toi si j'ai besoin de précisions. Je te tiendrai informé(e) de l'avancement via Teams 👀</p>
+        <div class="success-tags" id="successTags"></div>
+        <div id="successGifWrap" style="margin:20px auto 8px;max-width:260px;border-radius:14px;overflow:hidden;display:none;box-shadow:0 4px 20px rgba(0,0,0,0.1);">
+          <img id="successGif" style="width:100%;display:block;">
+        </div>
+        <button class="btn-reset" onclick="resetForm()">Nouvelle demande</button>
+      </div>
+      <div class="step active" id="step1">
+        <div class="field"><label>Titre de la demande <span class="req">*</span></label><input type="text" id="titre" placeholder="Ex: Mise à jour des filtres Algolia — catégorie Femme" oninput="clearError('titre')"><div class="error-msg" id="err-titre">Ce champ est obligatoire</div></div>
+        <div class="field"><label>Ton nom / prénom <span class="req">*</span></label><input type="text" id="demandeur" placeholder="Ex: Marie Dupont" oninput="clearError('demandeur')"><div class="error-msg" id="err-demandeur">Ce champ est obligatoire</div></div>
+        <div class="field"><label>Email Teams <span class="req">*</span> <span class="hint">— pour les notifications</span></label><input type="email" id="email" placeholder="marie.dupont@entreprise.com" oninput="clearError('email')"><div class="error-msg" id="err-email">Email valide obligatoire</div></div>
+        
+      </div>
+      <div class="step" id="step2">
+        <div class="field"><label>Nature de la demande <span class="req">*</span></label><div class="chip-group" id="nature-group"><button class="chip" onclick="selectChip('nature',this,'blue')">Projet</button><button class="chip" onclick="selectChip('nature',this,'blue')">Quick Win</button><button class="chip" onclick="selectChip('nature',this,'blue')">Dette technique</button></div><div class="error-msg" id="err-nature">Sélectionne la nature</div></div>
+        <div class="field"><label>Ta priorité <span class="req">*</span> <span class="hint">— à quel point c'est urgent pour toi</span></label><div class="chip-group" id="priorite-group"><button class="chip" onclick="selectChip('priorite',this,'blue')">🟠 Haute</button><button class="chip" onclick="selectChip('priorite',this,'blue')">🟡 Moyenne</button><button class="chip" onclick="selectChip('priorite',this,'blue')">🟢 Basse</button></div><div class="error-msg" id="err-priorite">Sélectionne une priorité</div></div>
+        <div class="field"><label>Périmètre(s) <span class="req">*</span> <span class="hint">— plusieurs choix possibles</span></label><div class="chip-group" id="labels-group"><button class="chip" onclick="toggleChip(this)">Algolia Search</button><button class="chip" onclick="toggleChip(this)">Algolia Reco</button><button class="chip" onclick="toggleChip(this)">Algolia Ranking</button><button class="chip" onclick="toggleChip(this)">Contentful</button><button class="chip" onclick="toggleChip(this)">Analytics</button><button class="chip" onclick="toggleChip(this)">AB/Test</button><button class="chip" onclick="toggleChip(this)">PIM</button><button class="chip" onclick="toggleChip(this)">Autre</button></div><div class="error-msg" id="err-labels">Sélectionne au moins un périmètre</div></div>
+      </div>
+      <div class="step" id="step3">
+        <div class="field"><label>🎯 Quel est le besoin ? <span class="req">*</span> <span class="hint">— Contexte, problème rencontré, ce que tu attends</span></label><textarea id="description" placeholder="Ex: Sur la page catégorie Femme, les résultats Algolia ne remontent pas les bons produits. On souhaite revoir la logique de ranking pour prioriser les articles en stock." oninput="updateCharCount();clearError('description')"></textarea><div class="char-count"><span id="charCount">0</span> caractères</div><div class="error-msg" id="err-description">Décris ta demande (20 caractères minimum)</div></div>
+        <div class="field"><label>📈 Quel est l'impact si non traité ? <span class="req">*</span> <span class="hint">— KPIs, revenus, expérience client, risque...</span></label><input type="text" id="impact" placeholder="Ex: Perte de conversion ~5% sur catégorie Femme, soit ~50K€/mois" oninput="clearError('impact')"><div class="error-msg" id="err-impact">Ce champ est obligatoire</div></div>
+        <div class="field"><label>✅ Quel est le résultat attendu ? <span class="req">*</span> <span class="hint">— Comment saura-t-on que c'est réussi ?</span></label><input type="text" id="resultat" placeholder="Ex: Les produits en stock apparaissent en priorité dans les 10 premiers résultats" oninput="clearError('resultat')"><div class="error-msg" id="err-resultat">Ce champ est obligatoire</div></div>
+        <div class="field"><label>💡 As-tu déjà exploré des pistes ? <span class="hint">— Optionnel : solutions envisagées, contraintes identifiées</span></label><input type="text" id="solution" placeholder="Ex: Modifier le poids du filtre stock dans la config Algolia"></div>
+        <div class="two-col"><div class="field"><label>📅 Deadline souhaitée</label><input type="date" id="deadline"></div><div class="field"><label>🔗 Lien / Maquette</label><input type="url" id="lien" placeholder="https://..."></div></div>
+        
+      </div>
+      <div class="step" id="step4">
+        <p class="recap-title">Vérifie ta demande avant envoi</p>
+        <div class="recap-card" id="recapCard"></div>
+        <div class="notice"><span>ℹ️</span><p>Ta demande sera transmise au CP Métier. Je reviendrai vers toi si j'ai besoin d'informations complémentaires, et je te tiendrai informé(e) de l'avancement via Teams.</p></div>
+        <div class="error-banner" id="errorBanner"></div>
+      </div>
+    </div>
+    <div class="footer" id="formFooter">
+      <button class="btn-secondary" id="btnBack" onclick="prevStep()" style="display:none">← Retour</button>
+      <div class="spacer"></div>
+      <button class="btn-primary" id="btnNext" onclick="nextStep()">Continuer →</button>
+      <button class="btn-submit" id="btnSubmit" onclick="submitForm()" style="display:none">✓ Envoyer la demande</button>
+    </div>
+  </div>
+</div>
+<script>
+  
+  
+  
 
-app.post('/submit', async function(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  try {
-    var payload = req.body;
+  let currentStep = 1;
+  const state = { nature:'', priorite:'', labels:[] };
 
-    var lienFinal = payload.lien && payload.lien.indexOf('http') === 0 ? payload.lien : null;
+  function nextStep() { if(!validateStep(currentStep))return; if(currentStep===3)buildRecap(); currentStep++; updateUI(); }
+  function prevStep() { currentStep--; updateUI(); }
 
-    var properties = {
-      "Titre": { "title": [{ "text": { "content": payload.titre || "" } }] },
-      "Demandeur": { "rich_text": [{ "text": { "content": payload.demandeur || "" } }] },
-      "Email": { "email": payload.email || null },
-      "Statut": { "select": { "name": "\ud83d\udce5 \u00c0 traiter" } },
-      "Nature": { "select": { "name": payload.nature } },
-      "Description": { "rich_text": [{ "text": { "content": payload.description || "" } }] },
-      "Impact m\u00e9tier": { "rich_text": [{ "text": { "content": payload.impact || "" } }] }
-    };
-
-    if (payload.priorite) properties["Priorit\u00e9"] = { "select": { "name": payload.priorite } };
-    if (payload.labels && payload.labels.length > 0) properties["P\u00e9rim\u00e8tres"] = { "multi_select": payload.labels.map(function(l) { return { "name": l }; }) };
-    if (payload.deadline) properties["Deadline"] = { "date": { "start": payload.deadline } };
-    if (payload.resultat) properties["R\u00e9sultat attendu"] = { "rich_text": [{ "text": { "content": payload.resultat } }] };
-    if (payload.solution) properties["Pistes explor\u00e9es"] = { "rich_text": [{ "text": { "content": payload.solution } }] };
-    if (lienFinal) properties["Lien / Maquette"] = { "url": lienFinal };
-
-    var body = JSON.stringify({ "parent": { "database_id": NOTION_DB_ID }, "properties": properties });
-
-    var response = await fetch("https://api.notion.com/v1/pages", {
-      method: "POST",
-      headers: {
-        "Authorization": "Bearer " + NOTION_TOKEN,
-        "Content-Type": "application/json",
-        "Notion-Version": "2022-06-28"
-      },
-      body: body
-    });
-
-    var data = await response.json();
-    if (!response.ok) {
-      return res.status(response.status).json({ error: data.message || "Erreur Notion" });
+  function updateUI() {
+    document.querySelectorAll('.step').forEach((s,i)=>s.classList.toggle('active',i+1===currentStep));
+    document.getElementById('stepBadge').textContent=`${currentStep} / 4`;
+    document.getElementById('btnBack').style.display=currentStep>1?'block':'none';
+    document.getElementById('btnNext').style.display=currentStep<4?'block':'none';
+    document.getElementById('btnSubmit').style.display=currentStep===4?'block':'none';
+    for(let i=1;i<=4;i++){
+      const dot=document.getElementById(`dot${i}`),lbl=document.getElementById(`lbl${i}`);
+      dot.className='p-dot'; lbl.className='p-label';
+      if(i<currentStep){dot.classList.add('done');dot.textContent='✓';lbl.classList.add('done');}
+      else if(i===currentStep){dot.classList.add('active');dot.textContent=i;lbl.classList.add('active');}
+      else{dot.textContent=i;}
+      if(i<4)document.getElementById(`line${i}`).className=`p-line${i<currentStep?' done':''}`;
     }
-
-    // Notifie Teams en parallèle (sans bloquer la réponse au formulaire)
-    notifyTeams(payload, data.url);
-
-    return res.json({ success: true, id: data.id });
-
-  } catch(err) {
-    return res.status(500).json({ error: err.message });
   }
-});
 
-var PORT = process.env.PORT || 3000;
-app.listen(PORT, function() {
-  console.log('Server running on port ' + PORT);
-});
+  function selectChip(field,el,color){el.closest('.chip-group').querySelectorAll('.chip').forEach(c=>c.className='chip');el.classList.add(`selected-${color}`);state[field]=el.textContent.trim();clearError(field);}
+  function toggleChip(el){el.classList.toggle('selected-cyan');state.labels=Array.from(document.querySelectorAll('#labels-group .chip.selected-cyan')).map(c=>c.textContent.trim());clearError('labels');}
+
+  function validateStep(step){
+    let valid=true;
+    if(step===1){if(!v('titre'))valid=false;if(!v('demandeur'))valid=false;const email=document.getElementById('email').value.trim();if(!email||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){showError('email');valid=false;}}
+    if(step===2){if(!state.nature){showError('nature');valid=false;}if(!state.priorite){showError('priorite');valid=false;}if(state.labels.length===0){showError('labels');valid=false;}}
+    if(step===3){if(document.getElementById('description').value.trim().length<20){showError('description');valid=false;}if(!v('impact'))valid=false;if(!v('resultat'))valid=false;}
+    return valid;
+  }
+
+  function v(id){const el=document.getElementById(id);if(!el.value.trim()){showError(id);return false;}return true;}
+  function showError(id){const el=document.getElementById(id);if(el)el.classList.add('error');const err=document.getElementById(`err-${id}`);if(err)err.classList.add('show');}
+  function clearError(id){const el=document.getElementById(id);if(el)el.classList.remove('error');const err=document.getElementById(`err-${id}`);if(err)err.classList.remove('show');}
+  function updateCharCount(){document.getElementById('charCount').textContent=document.getElementById('description').value.length;}
+  function g(id){return document.getElementById(id)?.value?.trim()||'';}
+  function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+  function buildRecap(){
+    const rows=[
+      {label:'Titre',value:g('titre')},{label:'Demandeur',value:g('demandeur')},
+      {label:'Email',value:g('email')},{label:'Nature',value:state.nature},{label:'Priorité',value:state.priorite},
+      {label:'Périmètres',value:state.labels.map(l=>`<span class="recap-tag">${l}</span>`).join(''),html:true},
+      {label:'Description',value:g('description'),multiline:true},{label:'Impact',value:g('impact')},{label:'Résultat attendu',value:g('resultat')},g('solution')?{label:'Pistes explorées',value:g('solution')}:null,
+      g('deadline')?{label:'Deadline',value:g('deadline')}:null,
+      g('lien')?{label:'Lien',value:`<a href="${g('lien')}" target="_blank" style="color:var(--blue)">${esc(g('lien'))}</a>`,html:true}:null,
+    ].filter(Boolean);
+    document.getElementById('recapCard').innerHTML=rows.map(r=>`<div class="recap-row"><span class="recap-label">${r.label}</span><span class="recap-value" style="${r.multiline?'white-space:pre-wrap':''}">${r.html?r.value:esc(r.value)}</span></div>`).join('');
+  }
+
+  async function submitForm(){
+    const btn=document.getElementById('btnSubmit');
+    const banner=document.getElementById('errorBanner');
+    banner.classList.remove('show');
+    btn.disabled=true; btn.textContent='⏳ Envoi en cours...';
+
+    const payload={
+      titre:g('titre'), demandeur:g('demandeur'), email:g('email'),
+      nature:state.nature, priorite:state.priorite,
+      labels:state.labels, description:g('description'),
+      impact:g('impact'), resultat:g('resultat'), solution:g('solution'), deadline:g('deadline'), lien:g('lien'),
+    };
+
+    try {
+      const res = await fetch('/submit', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify(payload)
+      });
+
+      const text = await res.text();
+      let data;
+      try { data = JSON.parse(text); } catch(e) { throw new Error(`Réponse invalide: ${text.substring(0,100)}`); }
+      if(!res.ok) throw new Error(data.message||`Erreur ${res.status}`);
+
+      document.getElementById('successTitle').textContent=`"${g('titre')}"`;
+      document.getElementById('successTags').innerHTML=[state.nature,state.priorite,...state.labels].map(t=>`<span class="success-tag">${t}</span>`).join('');
+      document.querySelector('.header').style.display='none';
+      document.getElementById('formFooter').style.display='none';
+      document.querySelector('.body').innerHTML='';
+      document.getElementById('successView').classList.add('show');
+      document.querySelector('.body').appendChild(document.getElementById('successView'));
+      loadFunGif();
+    } catch(err){
+      btn.disabled=false; btn.textContent='✓ Envoyer la demande';
+      banner.textContent=`❌ Erreur : ${err.message}`;
+      banner.classList.add('show');
+    }
+  }
+
+  function resetForm(){location.reload();}
+  async function loadFunGif(){
+    try {
+      const terms = ['lightbulb idea funny', 'great idea celebration', 'eureka excited'];
+      const q = terms[Math.floor(Math.random()*terms.length)];
+      const res = await fetch(`https://api.giphy.com/v1/gifs/random?api_key=dc6zaTOxFJmzC&tag=${encodeURIComponent(q)}&rating=g`);
+      const data = await res.json();
+      const url = data?.data?.images?.original?.url;
+      if(url){
+        document.getElementById('successGif').src = url;
+        document.getElementById('successGifWrap').style.display = 'block';
+      }
+    } catch(e) { /* le gif est un bonus, on ignore si ça échoue */ }
+  }
+
+</script>
+</body>
+</html>
