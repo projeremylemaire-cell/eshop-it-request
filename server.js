@@ -6,7 +6,7 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
 
 const NOTION_TOKEN = process.env.NOTION_TOKEN;
-const NOTION_DB_ID = "e3932eea-f641-4eb6-a5e6-56ec993dd8ff";
+const NOTION_DB_ID = "ad929c54-d71c-40a2-978d-a0fa22222dd1";
 const TEAMS_WEBHOOK_URL = "https://default0e2f240d11ec48d08dbe8871cf2c17.70.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/c573e397a5704bcdadadb234bf23ad85/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=Z66fmshFqvS4S8r4Hp34pX6TUnFYkQYEM6HbWU9bc1s";
 
 async function notifyTeams(payload, notionPageUrl) {
