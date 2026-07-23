@@ -82,6 +82,23 @@
   .btn-reset { padding:12px 32px; border-radius:12px; background:var(--blue-dark); color:#fff; border:none; font-weight:700; font-size:14px; cursor:pointer; font-family:inherit; }
   .error-banner { background:#fef2f2; border:1px solid #fecaca; border-radius:12px; padding:14px 16px; margin-top:16px; color:#dc2626; font-size:13px; font-weight:500; display:none; }
   .error-banner.show { display:block; }
+  .people-dropdown { position:absolute; top:100%; left:0; right:0; background:#fff; border:1.5px solid var(--slate-200); border-radius:10px; margin-top:4px; max-height:210px; overflow-y:auto; box-shadow:0 10px 24px rgba(0,0,0,0.1); z-index:20; display:none; }
+  .people-dropdown.show { display:block; }
+  .people-option { padding:9px 14px; font-size:13.5px; color:var(--slate-900); cursor:pointer; }
+  .people-option:hover { background:var(--blue-light); color:var(--blue); }
+  .hyp-card { border:1.5px solid var(--slate-200); background:#f8fafc; border-radius:14px; padding:18px 20px 20px; }
+  .hyp-section { margin-bottom:18px; padding-bottom:16px; border-bottom:1px dashed var(--slate-200); }
+  .hyp-section-title { font-size:11px; font-weight:800; color:var(--blue); text-transform:uppercase; letter-spacing:0.06em; margin-bottom:12px; }
+  .hyp-q { display:block; font-size:12.5px; font-weight:600; color:var(--slate-700); margin:12px 0 6px; }
+  .hyp-q:first-of-type { margin-top:0; }
+  .hyp-input { width:100%; padding:9px 12px; border-radius:8px; border:1.5px solid var(--slate-200); background:#fff; font-size:13.5px; font-family:inherit; min-height:52px; resize:vertical; line-height:1.5; }
+  .hyp-input:focus { border-color:var(--blue); box-shadow:0 0 0 3px rgba(37,99,235,0.1); }
+  .hyp-input.error { border-color:var(--red); }
+  .hyp-two-col { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  .hyp-preview { padding-top:2px; }
+  .hyp-preview-label { font-size:11px; font-weight:800; color:var(--slate-500); text-transform:uppercase; letter-spacing:0.06em; margin-bottom:8px; }
+  .hyp-preview-text { font-size:13.5px; color:var(--slate-700); font-style:italic; line-height:1.65; white-space:pre-wrap; background:#fff; border:1px solid var(--slate-200); border-radius:10px; padding:12px 14px; }
+  @media (max-width:480px) { .hyp-two-col { grid-template-columns:1fr; } }
   @media (max-width:480px) { .two-col { grid-template-columns:1fr; } .body { padding:24px 20px; } .header { padding:22px 20px 20px; } .footer { padding:16px 20px; } }
 </style>
 </head>
@@ -116,8 +133,8 @@
       </div>
       <div class="step active" id="step1">
         <div class="field"><label>Titre de la demande <span class="req">*</span></label><input type="text" id="titre" placeholder="Ex: Mise à jour des filtres Algolia — catégorie Femme" oninput="clearError('titre')"><div class="error-msg" id="err-titre">Ce champ est obligatoire</div></div>
-        <div class="field"><label>Ton nom / prénom <span class="req">*</span></label><input type="text" id="demandeur" placeholder="Ex: Marie Dupont" oninput="clearError('demandeur')"><div class="error-msg" id="err-demandeur">Ce champ est obligatoire</div></div>
-        <div class="field"><label>Email Teams <span class="req">*</span> <span class="hint">— pour les notifications</span></label><input type="email" id="email" placeholder="marie.dupont@entreprise.com" oninput="clearError('email')"><div class="error-msg" id="err-email">Email valide obligatoire</div></div>
+        <div class="field" style="position:relative;"><label>Ton nom / prénom <span class="req">*</span></label><input type="text" id="demandeur" autocomplete="off" placeholder="Commence à taper ton nom..." oninput="onDemandeurInput()" onfocus="onDemandeurInput()" onblur="hidePeopleDropdown()"><div id="peopleDropdown" class="people-dropdown"></div><div class="error-msg" id="err-demandeur">Sélectionne ton nom dans la liste</div></div>
+        <div class="field"><label>Email Teams <span class="req">*</span> <span class="hint">— rempli automatiquement</span></label><input type="email" id="email" placeholder="prenom.nom@kiabi.com" oninput="clearError('email')"><div class="error-msg" id="err-email">Email valide obligatoire</div></div>
         
       </div>
       <div class="step" id="step2">
@@ -126,8 +143,47 @@
         <div class="field"><label>Périmètre(s) <span class="req">*</span> <span class="hint">— plusieurs choix possibles</span></label><div class="chip-group" id="labels-group"><button class="chip" onclick="toggleChip(this)">Algolia Search</button><button class="chip" onclick="toggleChip(this)">Algolia Reco</button><button class="chip" onclick="toggleChip(this)">Algolia Ranking</button><button class="chip" onclick="toggleChip(this)">Contentful</button><button class="chip" onclick="toggleChip(this)">Analytics</button><button class="chip" onclick="toggleChip(this)">AB/Test</button><button class="chip" onclick="toggleChip(this)">PIM</button><button class="chip" onclick="toggleChip(this)">Autre</button></div><div class="error-msg" id="err-labels">Sélectionne au moins un périmètre</div></div>
       </div>
       <div class="step" id="step3">
-        <div class="field"><label>🎯 Quel est le besoin ? <span class="req">*</span> <span class="hint">— Contexte, problème rencontré, ce que tu attends</span></label><textarea id="description" placeholder="Ex: Sur la page catégorie Femme, les résultats Algolia ne remontent pas les bons produits. On souhaite revoir la logique de ranking pour prioriser les articles en stock." oninput="updateCharCount();clearError('description')"></textarea><div class="char-count"><span id="charCount">0</span> caractères</div><div class="error-msg" id="err-description">Décris ta demande (20 caractères minimum)</div></div>
-        <div class="field"><label>📈 Quel est l'impact si non traité ? <span class="req">*</span> <span class="hint">— KPIs, revenus, expérience client, risque...</span></label><input type="text" id="impact" placeholder="Ex: Perte de conversion ~5% sur catégorie Femme, soit ~50K€/mois" oninput="clearError('impact')"><div class="error-msg" id="err-impact">Ce champ est obligatoire</div></div>
+        <div id="normalFields">
+          <div class="field"><label>🎯 Quel est le besoin ? <span class="req">*</span> <span class="hint">— Contexte, problème rencontré, ce que tu attends</span></label><textarea id="description" placeholder="Ex: Sur la page catégorie Femme, les résultats Algolia ne remontent pas les bons produits. On souhaite revoir la logique de ranking pour prioriser les articles en stock." oninput="updateCharCount();clearError('description')"></textarea><div class="char-count"><span id="charCount">0</span> caractères</div><div class="error-msg" id="err-description">Décris ta demande (20 caractères minimum)</div></div>
+          <div class="field"><label>📈 Quel est l'impact si non traité ? <span class="req">*</span> <span class="hint">— KPIs, revenus, expérience client, risque...</span></label><input type="text" id="impact" placeholder="Ex: Perte de conversion ~5% sur catégorie Femme, soit ~50K€/mois" oninput="clearError('impact')"><div class="error-msg" id="err-impact">Ce champ est obligatoire</div></div>
+        </div>
+        <div id="abtestFields" style="display:none">
+          <div class="field">
+            <label>🧪 Ton hypothèse de test <span class="req">*</span> <span class="hint">— réponds aux 3 questions, la phrase se construit toute seule</span></label>
+            <div class="hyp-card">
+              <div class="hyp-section">
+                <div class="hyp-section-title">1 · L'hypothèse</div>
+                <label class="hyp-q">Sur quelles données / observations tu t'appuies ? <span class="req">*</span></label>
+                <textarea id="h1" class="hyp-input" placeholder="Ex: le taux de clic sur la fiche produit catégorie Femme" oninput="onHypInput(this)"></textarea>
+                <label class="hyp-q">Quelle condition / action tu testes ? <span class="req">*</span></label>
+                <textarea id="h2" class="hyp-input" placeholder="Ex: afficher un bandeau « stock limité »" oninput="onHypInput(this)"></textarea>
+                <div class="hyp-two-col">
+                  <div><label class="hyp-q">Pour quel type d'utilisateurs ? <span class="req">*</span></label><textarea id="h3" class="hyp-input" placeholder="Ex: les visiteurs mobile" oninput="onHypInput(this)"></textarea></div>
+                  <div><label class="hyp-q">Vers quel comportement ? <span class="req">*</span></label><textarea id="h4" class="hyp-input" placeholder="Ex: finaliser leur achat plus vite" oninput="onHypInput(this)"></textarea></div>
+                </div>
+              </div>
+              <div class="hyp-section">
+                <div class="hyp-section-title">2 · La preuve</div>
+                <label class="hyp-q">Quel effet observé confirmera l'hypothèse ? <span class="req">*</span></label>
+                <textarea id="h5" class="hyp-input" placeholder="Ex: une hausse du taux de conversion" oninput="onHypInput(this)"></textarea>
+                <label class="hyp-q">Sur quelle métrique clé (une seule, pour trancher go/no-go) ? <span class="req">*</span></label>
+                <textarea id="h6" class="hyp-input" placeholder="Ex: le taux de conversion catégorie Femme" oninput="onHypInput(this)"></textarea>
+              </div>
+              <div class="hyp-section" style="margin-bottom:0">
+                <div class="hyp-section-title">3 · La valeur</div>
+                <label class="hyp-q">En quoi c'est bénéfique pour les clients, les partenaires et l'entreprise ? <span class="req">*</span></label>
+                <textarea id="h7" class="hyp-input" placeholder="Ex: une expérience d'achat plus rassurante et plus de ventes" oninput="onHypInput(this)"></textarea>
+              </div>
+              <div class="hyp-preview">
+                <div class="hyp-preview-label">📝 Aperçu de ton hypothèse</div>
+                <p class="hyp-preview-text" id="hypPreviewText">En nous basant sur …, nous croyons que … encouragera … à ….</p>
+              </div>
+            </div>
+            <input type="hidden" id="hypothese">
+            <div class="error-msg" id="err-hypothese">Complète les 7 questions ci-dessus</div>
+          </div>
+          <div class="notice" style="background:#fffbeb;border-color:#fde68a;margin-bottom:26px;"><span>💡</span><p style="color:#92400e;">Petit conseil : essayez de chiffrer l'effet attendu avant de lancer le test, et choisissez une seule métrique clé pour décider du go/no-go. Les autres métriques sont là pour aider à comprendre les résultats, pas pour prendre la décision.</p></div>
+        </div>
         <div class="field"><label>✅ Quel est le résultat attendu ? <span class="req">*</span> <span class="hint">— Comment saura-t-on que c'est réussi ?</span></label><input type="text" id="resultat" placeholder="Ex: Les produits en stock apparaissent en priorité dans les 10 premiers résultats" oninput="clearError('resultat')"><div class="error-msg" id="err-resultat">Ce champ est obligatoire</div></div>
         <div class="field"><label>💡 As-tu déjà exploré des pistes ? <span class="hint">— Optionnel : solutions envisagées, contraintes identifiées</span></label><input type="text" id="solution" placeholder="Ex: Modifier le poids du filtre stock dans la config Algolia"></div>
         <div class="two-col"><div class="field"><label>📅 Deadline souhaitée</label><input type="date" id="deadline"></div><div class="field"><label>🔗 Lien / Maquette</label><input type="url" id="lien" placeholder="https://..."></div></div>
@@ -156,6 +212,84 @@
   let currentStep = 1;
   const state = { nature:'', priorite:'', labels:[] };
 
+  const peopleMap = {
+    'Alix PROUVOST':'alix.prouvost@kiabi.com',
+    'Alizee DURIEZ':'A.DURIEZ@KIABI.com',
+    'Anastasia BYALKOVSKAYA':'anastasia.byalkovskaya@kiabi.com',
+    'Emilie CAUCHY':'E.Cauchy@KIABI.com',
+    'Emilie PROUVOST':'E.PROUVOST@KIABI.com',
+    'Ines ZARGOUNI':'I.ZARGOUNI@KIABI.com',
+    'Jeremy LEMAIRE':'jeremy.lemaire@kiabi.com',
+    'Julia BOUILLARD':'julia.bouillard@kiabi.com',
+    'Juliette COCQ':'juliette.cocq1@kiabi.com',
+    'Justine DESCHAMPS':'justine.deschamps@kiabi.com',
+    'Maeva PECQUEUR':'maeva.pecqueur@kiabi.com',
+    'William DAMIENS':'william.damiens@kiabi.com',
+  };
+
+  function onDemandeurInput(){
+    clearError('demandeur');
+    const input = document.getElementById('demandeur');
+    const val = input.value.trim().toLowerCase();
+    const dropdown = document.getElementById('peopleDropdown');
+    const names = Object.keys(peopleMap);
+    const matches = val.length===0 ? names : names.filter(name=>name.toLowerCase().includes(val));
+    if(matches.length===0){
+      dropdown.classList.remove('show'); dropdown.innerHTML=''; return;
+    }
+    dropdown.innerHTML = matches.map(name=>`<div class="people-option" onmousedown="selectPerson('${name.replace(/'/g,"\\'")}')">${name}</div>`).join('');
+    dropdown.classList.add('show');
+    const exact = names.find(name=>name.toLowerCase()===val);
+    if(exact){ document.getElementById('email').value = peopleMap[exact]; clearError('email'); }
+  }
+
+  function selectPerson(name){
+    document.getElementById('demandeur').value = name;
+    document.getElementById('email').value = peopleMap[name];
+    clearError('demandeur'); clearError('email');
+    hidePeopleDropdown();
+  }
+
+  function hidePeopleDropdown(){
+    setTimeout(()=>{ const d=document.getElementById('peopleDropdown'); if(d){ d.classList.remove('show'); } }, 150);
+  }
+
+  function updateHypothese(){
+    const v1=g('h1')||'…', v2=g('h2')||'…', v3=g('h3')||'…', v4=g('h4')||'…', v5=g('h5')||'…', v6=g('h6')||'…', v7=g('h7')||'…';
+    const text = `En nous basant sur ${v1}, nous croyons que ${v2} encouragera ${v3} à ${v4}.\nNous le saurons quand nous verrons que ${v5} se produiront sur ${v6}.\nCe sera bon pour les clients, les partenaires et notre entreprise parce que ${v7}.`;
+    document.getElementById('hypothese').value = text;
+    const preview = document.getElementById('hypPreviewText');
+    if(preview) preview.textContent = text;
+  }
+
+  function onHypInput(el){
+    el.classList.remove('error');
+    updateHypothese();
+    const ids=['h1','h2','h3','h4','h5','h6','h7'];
+    if(ids.every(id=>document.getElementById(id).value.trim())){
+      document.getElementById('err-hypothese').classList.remove('show');
+    }
+  }
+
+  function validateHypothese(){
+    const ids=['h1','h2','h3','h4','h5','h6','h7'];
+    let ok=true;
+    ids.forEach(id=>{
+      const el=document.getElementById(id);
+      if(!el.value.trim()){ el.classList.add('error'); ok=false; }
+      else { el.classList.remove('error'); }
+    });
+    if(!ok){ document.getElementById('err-hypothese').classList.add('show'); }
+    else { document.getElementById('err-hypothese').classList.remove('show'); updateHypothese(); }
+    return ok;
+  }
+
+  function updateABTestMode(){
+    const isAB = state.labels.includes('AB/Test');
+    document.getElementById('normalFields').style.display = isAB ? 'none' : 'block';
+    document.getElementById('abtestFields').style.display = isAB ? 'block' : 'none';
+  }
+
   function nextStep() { if(!validateStep(currentStep))return; if(currentStep===3)buildRecap(); currentStep++; updateUI(); }
   function prevStep() { currentStep--; updateUI(); }
 
@@ -176,13 +310,21 @@
   }
 
   function selectChip(field,el,color){el.closest('.chip-group').querySelectorAll('.chip').forEach(c=>c.className='chip');el.classList.add(`selected-${color}`);state[field]=el.textContent.trim();clearError(field);}
-  function toggleChip(el){el.classList.toggle('selected-cyan');state.labels=Array.from(document.querySelectorAll('#labels-group .chip.selected-cyan')).map(c=>c.textContent.trim());clearError('labels');}
+  function toggleChip(el){el.classList.toggle('selected-cyan');state.labels=Array.from(document.querySelectorAll('#labels-group .chip.selected-cyan')).map(c=>c.textContent.trim());clearError('labels');updateABTestMode();}
 
   function validateStep(step){
     let valid=true;
     if(step===1){if(!v('titre'))valid=false;if(!v('demandeur'))valid=false;const email=document.getElementById('email').value.trim();if(!email||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){showError('email');valid=false;}}
     if(step===2){if(!state.nature){showError('nature');valid=false;}if(!state.priorite){showError('priorite');valid=false;}if(state.labels.length===0){showError('labels');valid=false;}}
-    if(step===3){if(document.getElementById('description').value.trim().length<20){showError('description');valid=false;}if(!v('impact'))valid=false;if(!v('resultat'))valid=false;}
+    if(step===3){
+      if(state.labels.includes('AB/Test')){
+        if(!validateHypothese())valid=false;
+      } else {
+        if(document.getElementById('description').value.trim().length<20){showError('description');valid=false;}
+        if(!v('impact'))valid=false;
+      }
+      if(!v('resultat'))valid=false;
+    }
     return valid;
   }
 
@@ -194,11 +336,15 @@
   function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 
   function buildRecap(){
+    const isAB = state.labels.includes('AB/Test');
+    if(isAB) updateHypothese();
     const rows=[
       {label:'Titre',value:g('titre')},{label:'Demandeur',value:g('demandeur')},
       {label:'Email',value:g('email')},{label:'Nature',value:state.nature},{label:'Priorité',value:state.priorite},
       {label:'Périmètres',value:state.labels.map(l=>`<span class="recap-tag">${l}</span>`).join(''),html:true},
-      {label:'Description',value:g('description'),multiline:true},{label:'Impact',value:g('impact')},{label:'Résultat attendu',value:g('resultat')},g('solution')?{label:'Pistes explorées',value:g('solution')}:null,
+      isAB ? {label:'Hypothèse',value:g('hypothese'),multiline:true} : {label:'Description',value:g('description'),multiline:true},
+      isAB ? null : {label:'Impact',value:g('impact')},
+      {label:'Résultat attendu',value:g('resultat')},g('solution')?{label:'Pistes explorées',value:g('solution')}:null,
       g('deadline')?{label:'Deadline',value:g('deadline')}:null,
       g('lien')?{label:'Lien',value:`<a href="${g('lien')}" target="_blank" style="color:var(--blue)">${esc(g('lien'))}</a>`,html:true}:null,
     ].filter(Boolean);
@@ -211,11 +357,12 @@
     banner.classList.remove('show');
     btn.disabled=true; btn.textContent='⏳ Envoi en cours...';
 
+    const isAB = state.labels.includes('AB/Test');
     const payload={
       titre:g('titre'), demandeur:g('demandeur'), email:g('email'),
       nature:state.nature, priorite:state.priorite,
-      labels:state.labels, description:g('description'),
-      impact:g('impact'), resultat:g('resultat'), solution:g('solution'), deadline:g('deadline'), lien:g('lien'),
+      labels:state.labels, description: isAB ? g('hypothese') : g('description'),
+      impact: isAB ? '' : g('impact'), resultat:g('resultat'), solution:g('solution'), deadline:g('deadline'), lien:g('lien'),
     };
 
     try {
